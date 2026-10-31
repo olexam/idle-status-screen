@@ -1,0 +1,176 @@
+#!/usr/bin/python3 -I
+"""idle-status-watcher: while the SDDM greeter is the active session on seat0
+and nobody touched any input device for IDLE_TIMEOUT seconds, switch to the
+status VT (btop). Any keyboard / mouse / touch event switches back to the
+greeter VT. Does nothing while a real user session is active on the seat."""
+
+import glob
+import os
+import select
+import struct
+import subprocess
+import sys
+import time
+
+CONF = "/etc/default/idle-status"
+EV_KEY, EV_REL, EV_ABS = 1, 2, 3
+EVENT_FMT = "llHHi"                      # struct input_event (64-bit)
+EVENT_SIZE = struct.calcsize(EVENT_FMT)
+
+
+def log(msg):
+    print(msg, flush=True)
+
+
+def load_conf():
+    conf = {"IDLE_TIMEOUT": "60", "STATUS_VT": "8"}
+    try:
+        with open(CONF) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    conf[k.strip()] = v.strip().strip('"')
+    except OSError:
+        pass
+    return int(conf["IDLE_TIMEOUT"]), int(conf["STATUS_VT"])
+
+
+def active_vt():
+    try:
+        with open("/sys/class/tty/tty0/active") as f:
+            return int(f.read().strip().removeprefix("tty"))
+    except (OSError, ValueError):
+        return None
+
+
+def loginctl(*args):
+    r = subprocess.run(["loginctl", *args], capture_output=True, text=True)
+    return r.stdout
+
+
+def session_props(sid):
+    out = loginctl("show-session", sid, "-p", "Class", "-p", "VTNr",
+                   "-p", "Seat", "-p", "State")
+    return dict(l.split("=", 1) for l in out.splitlines() if "=" in l)
+
+
+def seat_state():
+    """Return (greeter_vt, user_session_active_on_seat)."""
+    greeter_vt = None
+    user_active = False
+    for line in loginctl("list-sessions", "--no-legend").splitlines():
+        sid = line.split()[0]
+        p = session_props(sid)
+        if p.get("Seat") != "seat0":
+            continue
+        if p.get("Class") == "greeter" and p.get("VTNr", "0") != "0":
+            greeter_vt = int(p["VTNr"])
+        elif p.get("Class") == "user" and p.get("State") == "active":
+            user_active = True
+    return greeter_vt, user_active
+
+
+def dev_name(path):
+    try:
+        with open(f"/sys/class/input/{os.path.basename(path)}/device/name") as f:
+            return f"{path} ({f.read().strip()})"
+    except OSError:
+        return path
+
+
+def chvt(n):
+    log(f"switching to VT {n}")
+    subprocess.run(["chvt", str(n)])
+
+
+class Inputs:
+    def __init__(self):
+        self.fds = {}            # path -> fd
+
+    def rescan(self):
+        paths = set(glob.glob("/dev/input/event*"))
+        for p in list(self.fds):
+            if p not in paths:
+                self.close(p)
+        for p in paths - self.fds.keys():
+            try:
+                self.fds[p] = os.open(p, os.O_RDONLY | os.O_NONBLOCK)
+            except OSError:
+                pass
+
+    def close(self, p):
+        try:
+            os.close(self.fds.pop(p))
+        except (OSError, KeyError):
+            pass
+
+    def wait(self, timeout):
+        """Wait up to timeout seconds; return device path on user activity."""
+        try:
+            ready, _, _ = select.select(list(self.fds.values()), [], [], timeout)
+        except OSError:
+            self.rescan()
+            return None
+        activity = None
+        for fd in ready:
+            path = next(p for p, f in self.fds.items() if f == fd)
+            try:
+                data = os.read(fd, EVENT_SIZE * 64)
+            except BlockingIOError:
+                continue
+            except OSError:
+                self.close(path)          # device unplugged
+                continue
+            for off in range(0, len(data) - EVENT_SIZE + 1, EVENT_SIZE):
+                _, _, etype, _, _ = struct.unpack_from(EVENT_FMT, data, off)
+                if etype in (EV_KEY, EV_REL, EV_ABS):
+                    activity = path
+        return activity
+
+
+def main():
+    idle_timeout, status_vt = load_conf()
+    log(f"started: idle_timeout={idle_timeout}s status_vt={status_vt}")
+    inputs = Inputs()
+    inputs.rescan()
+    last_input = time.monotonic()
+    last_scan = 0.0
+    return_vt = None             # VT to go back to while status is shown
+
+    while True:
+        dev = inputs.wait(1.0)
+        if dev:
+            last_input = time.monotonic()
+            if active_vt() == status_vt:
+                target = return_vt or seat_state()[0]
+                if target:
+                    log(f"input on {dev_name(dev)}")
+                    chvt(target)
+                return_vt = None
+            continue
+
+        now = time.monotonic()
+        if now - last_scan >= 5:
+            inputs.rescan()
+            last_scan = now
+
+        vt = active_vt()
+        if return_vt and vt != status_vt:
+            return_vt = None          # someone switched VT by other means
+        if return_vt or now - last_input < idle_timeout:
+            continue
+
+        greeter_vt, user_active = seat_state()
+        if greeter_vt and not user_active and vt == greeter_vt:
+            return_vt = greeter_vt
+            chvt(status_vt)
+        else:
+            last_input = now          # re-check after another timeout
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        sys.exit(0)

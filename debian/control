@@ -1,0 +1,29 @@
+Source: idle-status-screen
+Section: admin
+Priority: optional
+Maintainer: Oleksiy Melnikov <olexam@gmail.com>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+
+Package: idle-status-screen
+Architecture: all
+Depends: ${misc:Depends},
+         python3,
+         kmscon,
+         tmux,
+         kbd,
+         systemd,
+         fonts-dejavu-core
+Recommends: btop
+Suggests: htop, atop, sddm
+Description: show system status (btop) while the login screen is idle
+ When nobody is logged in graphically and there is no keyboard, mouse or
+ touchscreen input for a while, the display switches from the login screen
+ (SDDM or another display manager greeter) to a virtual terminal showing a
+ system monitor such as btop, htop, atop or top. Any input switches back to
+ the login screen.
+ .
+ The monitor runs from boot in a tmux session, so graphs keep their history,
+ and is shown read-only through kmscon (TrueType fonts with Braille glyphs,
+ truecolor). X server screen blanking and DPMS are disabled.

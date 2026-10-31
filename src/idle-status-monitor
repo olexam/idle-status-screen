@@ -1,0 +1,23 @@
+#!/bin/sh
+# Runs the configured status program inside tmux (idle-status-monitor.service)
+# and restarts it if it exits, so the status screen never ends up empty.
+MONITOR=btop
+MONITOR_ARGS=
+# shellcheck source=/dev/null
+[ -r /etc/default/idle-status ] && . /etc/default/idle-status
+
+if [ -z "$MONITOR_ARGS" ]; then
+    case "$(basename "$MONITOR")" in
+        btop) MONITOR_ARGS="--no-tty -c /etc/idle-status/btop.conf" ;;
+        htop) MONITOR_ARGS="-d 5" ;;
+        top)  MONITOR_ARGS="-d 0.5" ;;
+        atop) MONITOR_ARGS="1" ;;
+    esac
+fi
+
+while :; do
+    # shellcheck disable=SC2086  # word splitting of arguments is intended
+    $MONITOR $MONITOR_ARGS
+    echo "idle-status-monitor: '$MONITOR' exited ($?), restarting..." >&2
+    sleep 2
+done

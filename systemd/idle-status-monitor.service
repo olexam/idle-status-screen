@@ -1,0 +1,20 @@
+[Unit]
+Description=Idle status screen: status program (runs in tmux from boot)
+Documentation=file:///usr/share/doc/idle-status-screen/README.md
+After=systemd-user-sessions.service
+
+[Service]
+Type=forking
+User=_idle-status
+Group=_idle-status
+RuntimeDirectory=idle-status
+RuntimeDirectoryMode=0750
+StateDirectory=idle-status
+Environment=LANG=C.UTF-8
+ExecStart=/usr/bin/tmux -S /run/idle-status/tmux.sock -f /etc/idle-status/tmux.conf new-session -d -s status /usr/libexec/idle-status/monitor
+ExecStop=/usr/bin/tmux -S /run/idle-status/tmux.sock kill-server
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=graphical.target

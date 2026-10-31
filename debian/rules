@@ -1,0 +1,9 @@
+#!/usr/bin/make -f
+%:
+	dh $@
+
+override_dh_auto_install:
+	$(MAKE) install DESTDIR=$(CURDIR)/debian/idle-status-screen
+
+# source checks (make check) run in CI, not in the package build
+override_dh_auto_test:

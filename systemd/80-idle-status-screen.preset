@@ -1,0 +1,6 @@
+# Enable the idle status screen services on installation, also on distributions
+# whose preset policy disables new services by default (e.g. Kali: "disable *").
+# Override in /etc/systemd/system-preset/ if needed.
+enable idle-status-monitor.service
+enable idle-status-display.service
+enable idle-status-watcher.service

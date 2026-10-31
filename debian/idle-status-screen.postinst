@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "configure" ]; then
+    # create the _idle-status system user before the services start
+    systemd-sysusers idle-status-screen.conf
+fi
+
+#DEBHELPER#
+
+exit 0

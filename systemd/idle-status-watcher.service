@@ -1,0 +1,14 @@
+[Unit]
+Description=Idle status screen: switch idle login screen to the status VT and back on input
+Documentation=file:///usr/share/doc/idle-status-screen/README.md
+After=display-manager.service idle-status-display.service
+Wants=idle-status-display.service
+
+[Service]
+Type=simple
+ExecStart=/usr/libexec/idle-status/watcher
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=graphical.target

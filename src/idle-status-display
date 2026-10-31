@@ -1,0 +1,17 @@
+#!/bin/sh
+# Starts kmscon on the status VT (idle-status-display.service). kmscon draws the
+# console itself (TrueType fonts with Braille, truecolor) and needs root for the
+# framebuffer/VT; the viewer inside runs as _idle-status.
+STATUS_VT=8
+KMSCON_FONT="DejaVu Sans Mono"
+KMSCON_FONT_SIZE=14
+KMSCON_ARGS="--no-drm"
+# shellcheck source=/dev/null
+[ -r /etc/default/idle-status ] && . /etc/default/idle-status
+
+# shellcheck disable=SC2086  # word splitting of KMSCON_ARGS is intended
+exec /usr/bin/kmscon --vt="tty$STATUS_VT" --no-switchvt --no-mouse \
+    --dpms-timeout=0 --font-name="$KMSCON_FONT" --font-size="$KMSCON_FONT_SIZE" \
+    --term=xterm-256color $KMSCON_ARGS \
+    --login -- /usr/bin/setpriv --reuid=_idle-status --regid=_idle-status \
+    --init-groups --reset-env /usr/libexec/idle-status/attach

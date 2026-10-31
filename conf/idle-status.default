@@ -1,0 +1,26 @@
+# Settings for idle-status-screen.
+# After changing, restart the services:
+#   sudo systemctl restart idle-status-monitor idle-status-display idle-status-watcher
+
+# Seconds without keyboard/mouse/touch input on the login screen (greeter)
+# before switching to the status screen.
+IDLE_TIMEOUT=30
+
+# Virtual terminal used for the status screen (keep it outside tty1-6,
+# which are used by getty).
+STATUS_VT=8
+
+# Status program: btop, htop, atop, top, or any other command/path.
+MONITOR=btop
+# Arguments for MONITOR. Empty = built-in defaults for known programs:
+#   btop: --no-tty -c /etc/idle-status/btop.conf   htop: -d 5
+#   top:  -d 0.5                                   atop: 1
+MONITOR_ARGS=
+
+# kmscon (draws the status VT) font and size in pixels.
+KMSCON_FONT="DejaVu Sans Mono"
+KMSCON_FONT_SIZE=14
+# Extra kmscon arguments. --no-drm makes kmscon draw through the framebuffer
+# only (avoids double output on Raspberry Pi DSI displays); remove it to let
+# kmscon use DRM/KMS directly. See kmscon --help (e.g. --rotate=right).
+KMSCON_ARGS="--no-drm"

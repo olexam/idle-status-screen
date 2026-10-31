@@ -1,0 +1,9 @@
+#!/bin/sh
+# Read-only tmux client shown by kmscon: waits for the monitor session and
+# attaches with -r, so keystrokes on the status screen never reach the program.
+# -u forces UTF-8 (setpriv --reset-env drops the locale).
+S=/run/idle-status/tmux.sock
+until /usr/bin/tmux -S "$S" has-session -t status 2>/dev/null; do
+    sleep 1
+done
+exec /usr/bin/tmux -u -S "$S" attach -r -t status
