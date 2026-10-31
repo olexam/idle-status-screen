@@ -1,5 +1,6 @@
 [Unit]
 Description=Idle status screen: status program (runs in tmux from boot)
+Documentation=https://github.com/olexam/idle-status-screen
 Documentation=file:///usr/share/doc/idle-status-screen/README.md
 After=systemd-user-sessions.service
 

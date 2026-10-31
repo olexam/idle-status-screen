@@ -1,5 +1,6 @@
 [Unit]
 Description=Idle status screen: switch idle login screen to the status VT and back on input
+Documentation=https://github.com/olexam/idle-status-screen
 Documentation=file:///usr/share/doc/idle-status-screen/README.md
 After=display-manager.service idle-status-display.service
 Wants=idle-status-display.service

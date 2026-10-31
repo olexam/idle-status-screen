@@ -30,7 +30,7 @@
 
 ## Встановлення
 
-Завантаж `.deb` зі сторінки [Releases](../../releases) і встанови:
+Завантаж `.deb` зі сторінки [Releases](https://github.com/olexam/idle-status-screen/releases) і встанови:
 
 ```sh
 sudo apt install ./idle-status-screen_*_all.deb

@@ -1,5 +1,6 @@
 [Unit]
 Description=Idle status screen: kmscon on the status VT (read-only view)
+Documentation=https://github.com/olexam/idle-status-screen
 Documentation=file:///usr/share/doc/idle-status-screen/README.md
 After=systemd-user-sessions.service systemd-logind.service idle-status-monitor.service
 Wants=idle-status-monitor.service

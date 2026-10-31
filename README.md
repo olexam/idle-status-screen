@@ -29,7 +29,7 @@ it is Pi-specific.
 
 ## Install
 
-Download the `.deb` from the [Releases](../../releases) page and install it:
+Download the `.deb` from the [Releases](https://github.com/olexam/idle-status-screen/releases) page and install it:
 
 ```sh
 sudo apt install ./idle-status-screen_*_all.deb

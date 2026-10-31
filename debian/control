@@ -1,10 +1,13 @@
 Source: idle-status-screen
 Section: admin
 Priority: optional
-Maintainer: Oleksiy Melnikov <olexam@gmail.com>
+Maintainer: Oleksiy Melnikov <20913062+olexam@users.noreply.github.com>
 Build-Depends: debhelper-compat (= 13)
 Standards-Version: 4.7.0
 Rules-Requires-Root: no
+Homepage: https://github.com/olexam/idle-status-screen
+Vcs-Browser: https://github.com/olexam/idle-status-screen
+Vcs-Git: https://github.com/olexam/idle-status-screen.git
 
 Package: idle-status-screen
 Architecture: all
